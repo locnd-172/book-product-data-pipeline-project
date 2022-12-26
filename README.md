@@ -1,4 +1,4 @@
-# DATA PIPELINES WITH AIRFLOW PROJECT
+# DATA PIPELINE WITH AIRFLOW PROJECT
 
 ## Preparation
 - Install Docker, Docker-compose on Ubuntu Distro - WSL2
@@ -20,4 +20,3 @@ sudo docker ps
 <p align="center">
     <img src="./assets/img/Postgres%20-%20Server%20Register.png">
 </p>
-
