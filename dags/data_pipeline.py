@@ -9,6 +9,14 @@ import scripts.sql_statements
 import scripts.extract_product_id
 import scripts.extract_product_data
 import scripts.extract_product_review
+import scripts.create_fact_book_product_table
+import scripts.create_dim_book_table
+import scripts.create_dim_category_table
+import scripts.create_dim_review_table
+import scripts.transform_load_dim_book
+import scripts.transform_load_dim_category
+import scripts.transform_load_dim_review
+import scripts.transform_load_fact_book_product
 
 default_args = {
     'owner': 'Loc Nguyen',
@@ -64,7 +72,52 @@ with DAG(
         python_callable=scripts.extract_product_review.main
     )
     
+    create_fact_book_product_table = PythonOperator(
+        task_id='create_fact_book_product_table',
+        python_callable=scripts.create_fact_book_product_table.main
+    )
+    
+    create_dim_book_table = PythonOperator(
+        task_id='create_dim_book_table',
+        python_callable=scripts.create_dim_book_table.main
+    )
+    
+    create_dim_category_table = PythonOperator(
+        task_id='create_dim_category_table',
+        python_callable=scripts.create_dim_category_table.main
+    )
+    
+    create_dim_review_table = PythonOperator(
+        task_id='create_dim_review_table',
+        python_callable=scripts.create_dim_review_table.main
+    )
+    
+    transform_load_dim_book = PythonOperator(
+        task_id='transform_load_dim_book',
+        python_callable=scripts.transform_load_dim_book.main
+    )
+    
+    transform_load_dim_category = PythonOperator(
+        task_id='transform_load_dim_category',
+        python_callable=scripts.transform_load_dim_category.main
+    )
+    
+    transform_load_dim_review = PythonOperator(
+        task_id='transform_load_dim_review',
+        python_callable=scripts.transform_load_dim_review.main
+    )
+    
+    transform_load_fact_book_product = PythonOperator(
+        task_id='transform_load_fact_book_product',
+        python_callable=scripts.transform_load_fact_book_product.main
+    )
+    
     end_operator = DummyOperator(task_id='stop_pipeline')
 
     start_operator >> [create_staging_book_product_id_table, create_staging_book_product_data_table, create_staging_book_product_review_table] >> extract_product_id
-    extract_product_id >> [extract_product_data, extract_product_review] >> end_operator
+    extract_product_id >> [extract_product_data, extract_product_review] >> create_fact_book_product_table
+    create_fact_book_product_table >> [create_dim_book_table, create_dim_category_table, create_dim_review_table]
+    create_dim_book_table.set_downstream(transform_load_dim_book)
+    create_dim_category_table.set_downstream(transform_load_dim_category)
+    create_dim_review_table.set_downstream(transform_load_dim_review)
+    [transform_load_dim_book, transform_load_dim_category, transform_load_dim_review] >> transform_load_fact_book_product >> end_operator
