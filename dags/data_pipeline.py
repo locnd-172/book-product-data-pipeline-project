@@ -17,6 +17,7 @@ import scripts.transform_load_dim_book
 import scripts.transform_load_dim_category
 import scripts.transform_load_dim_review
 import scripts.transform_load_fact_book_product
+import scripts.check_data_quality_report
 
 default_args = {
     'owner': 'Loc Nguyen',
@@ -112,6 +113,11 @@ with DAG(
         python_callable=scripts.transform_load_fact_book_product.main
     )
     
+    check_data_quality = PythonOperator(
+        task_id='check_data_quality',
+        python_callable=scripts.check_data_quality_report.main
+    )
+    
     end_operator = DummyOperator(task_id='stop_pipeline')
 
     start_operator >> [create_staging_book_product_id_table, create_staging_book_product_data_table, create_staging_book_product_review_table] >> extract_product_id
@@ -120,4 +126,4 @@ with DAG(
     create_dim_book_table.set_downstream(transform_load_dim_book)
     create_dim_category_table.set_downstream(transform_load_dim_category)
     create_dim_review_table.set_downstream(transform_load_dim_review)
-    [transform_load_dim_book, transform_load_dim_category, transform_load_dim_review] >> transform_load_fact_book_product >> end_operator
+    [transform_load_dim_book, transform_load_dim_category, transform_load_dim_review] >> transform_load_fact_book_product >> check_data_quality >> end_operator
