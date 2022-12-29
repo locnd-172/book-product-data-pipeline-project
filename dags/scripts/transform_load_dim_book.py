@@ -1,6 +1,5 @@
 import pandas as pd
 from sqlalchemy import create_engine
-import psycopg2
 import ibm_db
 
 # Connect to DB2
@@ -31,11 +30,11 @@ insert_dim_book_table = '''
 def transform(df_book_products):
     df_book_products['number_of_pages'] = df_book_products['number_of_pages'].map(lambda x : int(str(x or '0')))
     df_book_products['discount_rate'] = df_book_products['discount_rate'].map(lambda x : float(x) / 100)
-    df_book_products['author'] = df_book_products['author'].map(lambda x : str(x or '').strip().title())
-    df_book_products['publisher'] = df_book_products['publisher'].map(lambda x : str(x or '').strip().title())
-    df_book_products['manufacturer'] = df_book_products['manufacturer'].map(lambda x : str(x or '').strip().title())
-    df_book_products['translator'] = df_book_products['translator'].map(lambda x : str(x or '').strip().title())
-    df_book_products['book_cover'] = df_book_products['book_cover'].map(lambda x : str(x or '').strip().capitalize())
+    df_book_products['author'] = df_book_products['author'].map(lambda x : str(x or 'Unknown').strip().title())
+    df_book_products['publisher'] = df_book_products['publisher'].map(lambda x : str(x or 'Unknown').strip().title())
+    df_book_products['manufacturer'] = df_book_products['manufacturer'].map(lambda x : str(x or 'Unknown').strip().title())
+    df_book_products['translator'] = df_book_products['translator'].map(lambda x : str(x or 'Unknown').strip().title())
+    df_book_products['book_cover'] = df_book_products['book_cover'].map(lambda x : str(x or 'Unknown').strip().capitalize())
 
     df_book_products['publication_date'] = pd.to_datetime(df_book_products.publication_date)
     df_book_products['publication_date'] = df_book_products['publication_date'].dt.strftime("%m-%d-%Y")
@@ -47,9 +46,6 @@ def transform(df_book_products):
 def main():   
     ibm_conn = ibm_db.connect(dsn, "", "")
 
-    postgres_conn = psycopg2.connect(database = "airflow", user = "airflow", password = "airflow", host = "project-db", port = "5432")
-    postgres_cur = postgres_conn.cursor()
-
     alchemyEngine = create_engine('postgresql+psycopg2://airflow:airflow@project-db:5432/airflow', pool_recycle=3600);
     dbConnection = alchemyEngine.connect();
 
@@ -59,9 +55,15 @@ def main():
     book_list = list(df_book.itertuples(index=False, name=None))
     
     insert_book_stmt = ibm_db.prepare(ibm_conn, insert_dim_book_table)
+    cnt = 0
     for book in book_list:
         # print(book)
-        ibm_db.execute(insert_book_stmt, book)
+        cnt = cnt + 1
+        print(f"\n{cnt} / {len(book_list)}:", book[0], book[1])
+        try: 
+            ibm_db.execute(insert_book_stmt, book)
+        except: 
+            print("Error occurred with ", book[0])
 
     ibm_db.close(ibm_conn)
 

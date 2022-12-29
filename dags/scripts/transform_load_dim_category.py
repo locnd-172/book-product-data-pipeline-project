@@ -1,6 +1,5 @@
 import pandas as pd
 from sqlalchemy import create_engine
-import psycopg2
 import ibm_db
 
 # Connect to DB2
@@ -41,9 +40,6 @@ def transform(df_book_products):
 def main():   
     ibm_conn = ibm_db.connect(dsn, "", "")
 
-    postgres_conn = psycopg2.connect(database = "airflow", user = "airflow", password = "airflow", host = "project-db", port = "5432")
-    postgres_cur = postgres_conn.cursor()
-
     alchemyEngine = create_engine('postgresql+psycopg2://airflow:airflow@project-db:5432/airflow', pool_recycle=3600);
     dbConnection = alchemyEngine.connect();
 
@@ -51,10 +47,16 @@ def main():
     category_list = list(df_category.itertuples(index=False, name=None))
     
     insert_cateogory_stmt = ibm_db.prepare(ibm_conn, insert_dim_category_table)
+    cnt = 0
     for category in category_list:
         # print(category)
-        ibm_db.execute(insert_cateogory_stmt, category)
-
+        cnt = cnt + 1
+        print(f"\n{cnt} / {len(category_list)}:", category[0])
+        try:
+            ibm_db.execute(insert_cateogory_stmt, category)
+        except: 
+            print("Error occurred with ", category[0])
+        
     ibm_db.close(ibm_conn)
 
 if __name__ == '__main__':

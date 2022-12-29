@@ -1,6 +1,5 @@
 import pandas as pd
 from sqlalchemy import create_engine
-import psycopg2
 import ibm_db
 
 # Connect to DB2
@@ -43,9 +42,6 @@ def transform(df_book_reviews):
 def main():   
     ibm_conn = ibm_db.connect(dsn, "", "")
 
-    postgres_conn = psycopg2.connect(database = "airflow", user = "airflow", password = "airflow", host = "project-db", port = "5432")
-    postgres_cur = postgres_conn.cursor()
-
     alchemyEngine = create_engine('postgresql+psycopg2://airflow:airflow@project-db:5432/airflow', pool_recycle=3600);
     dbConnection = alchemyEngine.connect();
 
@@ -53,9 +49,16 @@ def main():
     review_list = list(df_review.itertuples(index=False, name=None))
     
     insert_review_stmt = ibm_db.prepare(ibm_conn, insert_dim_review_table)
+    cnt = 0
     for review in review_list:
         # print(review)
-        ibm_db.execute(insert_review_stmt, review)
+        cnt = cnt + 1
+        print(f"\n{cnt} / {len(review_list)}:", review[0], review[1])
+        try: 
+            ibm_db.execute(insert_review_stmt, review)
+        except: 
+            print("Error occurred with ", review[0])
+        
 
     ibm_db.close(ibm_conn)
 

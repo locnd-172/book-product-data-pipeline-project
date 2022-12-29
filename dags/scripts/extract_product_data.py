@@ -50,7 +50,7 @@ params = (
 insert_staging_table = '''
     INSERT INTO staging.book_product_data VALUES (
         DEFAULT, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
-    );
+    ) ON CONFLICT ON CONSTRAINT product_id_unique DO NOTHING;
 '''
 
 def get_attr_value(attributes, field):
@@ -89,8 +89,9 @@ def parser_product(json):
     width, height = 0, 0
     if tmp_dim: 
         dimensions = re.findall(r'\d+\.\d+|\d+', tmp_dim)
-        width = float(dimensions[0])
-        height = float(dimensions[1])
+        if len(dimensions) == 2:
+            width = float(dimensions[0])
+            height = float(dimensions[1])
     
     category = json.get('breadcrumbs')[2].get('name')
     category_id = json.get('breadcrumbs')[2].get('category_id')
@@ -113,21 +114,19 @@ def main():
     count_product = 0
     for pid in product_id_list:
         cnt = cnt + 1
-        if cnt == 51: break
-    
+        print(f"\n{cnt} / {len(product_id_list)}: ")
         response = requests.get(url=url.format(pid), headers=headers, params=params, cookies=cookies)
+        print('Crawl data for product {}'.format(pid))
         if response.status_code == 200:
-            # try:
-                print('\nCrawl data - product {}'.format(pid))
+            try:
                 values = parser_product(response.json())
                 cur.execute(insert_staging_table, values)
                 count_product = count_product + 1
                 print('Success!!!')
-            # except:
-            #     print("Errors occur!!!")
-        else:
-            print(response)
-        # time.sleep(random.randrange(3, 5)) 
+            except:
+                print("Errors occur!!!")
+       
+        time.sleep(random.randrange(1, 2)) 
 
     print(f"Crawled: {count_product} products' data")
 

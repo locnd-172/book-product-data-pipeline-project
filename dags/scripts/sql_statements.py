@@ -47,6 +47,7 @@ create_staging_book_product_review_table='''
         percent_4_star real DEFAULT 0,
         count_5_star integer DEFAULT 0,
         percent_5_star real DEFAULT 0,
-        PRIMARY KEY (id)
+        PRIMARY KEY (id),
+        CONSTRAINT product_id_unique_rv UNIQUE (product_id)
     );
 '''

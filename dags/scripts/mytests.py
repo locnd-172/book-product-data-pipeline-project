@@ -33,7 +33,7 @@ test4={
 	"test": check_for_valid_values,
 	"column": "book_cover",
 	"table": "DIMBOOK",
-	"valid_values": {'Bìa mềm','Bìa cứng', 'Bìa gập', 'Boxset', 'Paperback', 'Box'}
+	"valid_values": {'Bìa mềm','Bìa cứng', 'Bìa gập', 'Bìa rời', 'Bìa da', 'Boxset', 'Paperback', 'Box'}
 }
 
 test5={

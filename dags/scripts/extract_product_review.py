@@ -92,16 +92,24 @@ def main():
     product_id_list = df_book_product_id.product_id.to_list()
     
     cnt = 0
+    count_product = 0
     for pid in product_id_list:
         cnt = cnt + 1
-        if cnt == 100: break
         params['product_id'] = pid
-        print('\nCrawl reviews for product {}'.format(pid))
+        print(f"\n{cnt} / {len(product_id_list)}: ")
+        print('Crawl reviews for product {}'.format(pid))
         response = requests.get(url=url, headers=headers, params=params)
         if response.status_code == 200:
-            values = parse_reviews(response.json(), pid)
-            cur.execute(insert_staging_table, values)
-
+            try: 
+                values = parse_reviews(response.json(), pid)
+                cur.execute(insert_staging_table, values)
+                count_product = count_product + 1
+                print("Success!")
+            except:
+                print("Errors occur!!!", response)
+                
+    print(f"Crawled: {count_product} products' data")
+    
     conn.commit()
 
     cur.close()
